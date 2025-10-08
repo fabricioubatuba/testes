@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Ubatuba de Ciclismo - R.U.C.</title>
+    <!-- Favicon (ícone na aba do navegador) -->
+    <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --gray-color: #7f8c8d;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .logo {
+            display: block;
+            width: 180px;
+            margin: 0 auto 20px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            color: var(--gray-color);
+            font-size: 1.2em;
+            margin-top: 0;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--gray-color);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Grid de eventos */
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .event-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .event-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .event-content {
+            padding: 20px;
+        }
+        
+        .event-title {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .event-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .event-date, .event-price {
+            font-weight: bold;
+        }
+        
+        .event-description {
+            margin-bottom: 15px;
+            color: var(--gray-color);
+        }
+        
+        .event-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+        
+        .status-open {
+            background-color: var(--success-color);
+            color: var(--white);
+        }
+        
+        .status-closed {
+            background-color: var(--danger-color);
+            color: var(--white);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .regulation-btn {
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .admin-actions {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        /* Modais */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: var(--dark-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        /* Painel administrativo */
+        .login-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .admin-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+        
+        .login-btn {
+            background-color: var(--success-color);
+        }
+        
+        .logout-btn {
+            background-color: var(--danger-color);
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--secondary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        /* Start List */
+        .start-list {
+            margin-top: 30px;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        .start-list h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        .start-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .start-list th, .start-list td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .start-list th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .edit-btn {
+            background-color: var(--secondary-color);
+        }
+        
+        .delete-btn {
+            background-color: var(--danger-color);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-pending {
+            background-color: var(--warning-color);
+        }
+        
+        .status-waiting {
+            background-color: var(--secondary-color);
+        }
+        
+        .status-completed {
+            background-color: var(--success-color);
+        }
+        
+        .status-filter {
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        /* Opções de categorias e modalidades */
+        .options-container {
+            margin-bottom: 20px;
+        }
+        
+        .options-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .options-checkbox {
+            margin-right: 10px;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            background-color: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 4px;
+            width: calc(50% - 5px);
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .events-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .event-info {
+                flex-direction: column;
+            }
+            
+            .event-date, .event-price {
+                margin-bottom: 5px;
+            }
+            
+            .start-list table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .options-list {
+                flex-direction: column;
+            }
+            
+            .option-item {
+                width: 100%;
+            }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+                padding: 20px;
+            }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="assets/img/Logo-RC4-Sports.png" alt="Logo RC4 Sports" class="logo">
+        <h1>Ranking Ubatuba de Ciclismo - R.U.C.</h1>
+        <p class="subtitle">Inscreva-se nos próximos eventos e desafie seus limites!</p>
+    </header>
+    
+    <!-- Tabs para navegação -->
+    <div class="tabs">
+        <div class="tab active" data-tab="active-events">Eventos Ativos</div>
+        <div class="tab" data-tab="finished-events">Eventos Finalizados</div>
+    </div>
+    
+    <!-- Conteúdo das abas -->
+    <div id="active-events" class="tab-content active">
+        <div id="active-events-container" class="events-grid">
+            <div class="loading-spinner" id="active-events-spinner"></div>
+        </div>
+    </div>
+    
+    <div id="finished-events" class="tab-content">
+        <div id="finished-events-container" class="events-grid">
+            <div class="loading-spinner" id="finished-events-spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Seção de login -->
+    <div class="login-container" id="login-section">
+        <button id="login-btn" class="btn login-btn">Login Admin</button>
+    </div>
+    
+    <!-- Painel administrativo -->
+    <div class="admin-panel" id="admin-panel">
+        <h2>Painel Administrativo</h2>
+        <p>Você está logado como administrador.</p>
+        <button id="add-event-btn" class="btn btn-primary">Adicionar Novo Evento</button>
+        <button id="logout-btn" class="btn logout-btn">Logout</button>
+    </div>
+    
+    <!-- Modal de inscrição -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Inscrição no Evento</h2>
+            <p id="event-selected-name" style="font-weight: bold; margin-bottom: 20px;"></p>
+            
+            <div class="form-group">
+                <label for="full-name">Nome Completo:</label>
+                <input type="text" id="full-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="birth-date">Data de Nascimento (DD-MM-AAAA):</label>
+                <input type="text" id="birth-date" placeholder="DD-MM-AAAA" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Telefone:</label>
+                <input type="tel" id="phone" placeholder="(00) 00000-0000" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="voucher-code">Código de Desconto/Voucher (opcional):</label>
+                <input type="text" id="voucher-code" placeholder="Digite o código de desconto">
+            </div>
+            
+            <div id="category-section" class="form-group" style="display: none;">
+                <label for="category">Categoria:</label>
+                <select id="category" required>
+                    <option value="">Selecione sua categoria</option>
+                </select>
+            </div>
+            
+            <div id="modality-section" class="form-group" style="display: none;">
+                <label for="modality">Modalidade:</label>
+                <select id="modality" required>
+                    <option value="">Selecione sua modalidade</option>
+                </select>
+            </div>
+            
+            <div class="loading-spinner" id="register-spinner"></div>
+            <button id="confirm-register-btn" class="btn btn-success">Confirmar Inscrição</button>
+        </div>
+    </div>
+    
+    <!-- Modal de login -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login Administrativo</h2>
+            <div class="form-group">
+                <label for="admin-email">Email:</label>
+                <input type="email" id="admin-email" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Senha:</label>
+                <input type="password" id="admin-password" required>
+            </div>
+            <button id="confirm-login-btn" class="btn btn-success">Login</button>
+            <p id="login-error" style="color: red; display: none;">Email ou senha incorretos.</p>
+        </div>
+    </div>
+    
+    <!-- Modal de adição/edição de evento -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="event-modal-title">Adicionar Novo Evento</h2>
+            
+            <div class="form-group">
+                <label for="event-name">Nome do Evento:</label>
+                <input type="text" id="event-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-date">Data do Evento:</label>
+                <input type="date" id="event-date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-price">Valor da Inscrição (R$):</label>
+                <input type="number" id="event-price" min="0" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-description">Descrição (opcional):</label>
+                <textarea id="event-description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-image-url">URL da Imagem (opcional):</label>
+                <input type="text" id="event-image-url" placeholder="Cole a URL da imagem aqui">
+                <small>Se não informar, será usada uma imagem relacionada ao esporte</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="regulation-link">Link do Regulamento (Google Drive):</label>
+                <input type="text" id="regulation-link" placeholder="Cole o link compartilhável do Google Drive">
+                <small>Certifique-se de que o link está configurado como "Qualquer pessoa com o link pode visualizar"</small>
+            </div>
+            
+            <div class="options-container">
+                <div class="options-title">Opções de Inscrição:</div>
+                <div>
+                    <input type="checkbox" id="use-categories" class="options-checkbox">
+                    <label for="use-categories">Usar Categorias</label>
+                </div>
+                <div id="categories-list" class="options-list" style="display: none;">
+                    <!-- Categorias serão carregadas dinamicamente do Firebase -->
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <input type="checkbox" id="use-modalities" class="options-checkbox">
+                    <label for="use-modalities">Usar Modalidades</label>
+                </div>
+                <div id="modalities-list" class="options-list" style="display: none;">
+                    <!-- Modalidades serão carregadas dinamicamente do Firebase -->
+                </div>
+            </div>
+            
+            <div class="loading-spinner" id="event-spinner"></div>
+            <button id="save-event-btn" class="btn btn-success">Salvar Evento</button>
+            <button id="delete-event-btn" class="btn btn-danger" style="display: none; margin-top: 10px;">Excluir Evento</button>
+        </div>
+    </div>
+    
+    <!-- Modal de edição de inscrito -->
+    <div id="rider-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Inscrito</h2>
+            <p id="rider-event-name" style="font-weight: bold; margin-bottom: 20px;"></p>
+            
+            <div class="form-group">
+                <label for="edit-name">Nome Completo:</label>
+                <input type="text" id="edit-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-voucher-code">Código de Desconto/Voucher:</label>
+                <input type="text" id="edit-voucher-code" placeholder="Código de desconto utilizado">
+            </div>
+            
+            <div id="edit-category-section" class="form-group" style="display: none;">
+                <label for="edit-category">Categoria:</label>
+                <select id="edit-category"></select>
+            </div>
+            
+            <div id="edit-modality-section" class="form-group" style="display: none;">
+                <label for="edit-modality">Modalidade:</label>
+                <select id="edit-modality"></select>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-status">Status:</label>
+                <select id="edit-status" required>
+                    <option value="pending">Contato Pendente</option>
+                    <option value="waiting">Aguardando Pagamento</option>
+                    <option value="completed">Pagamento Concluído</option>
+                </select>
+            </div>
+            
+            <div class="loading-spinner" id="rider-spinner"></div>
+            <button id="save-rider-btn" class="btn btn-success">Salvar Alterações</button>
+            <button id="delete-rider-btn" class="btn btn-danger" style="margin-top: 10px;">Excluir Inscrição</button>
+        </div>
+    </div>
+    
+    <script>
+        // Configuração do Firebase para eventos
+        const firebaseConfigEvents = {
+            apiKey: "AIzaSyAwkcOWdZf46_TZQlHE2N_k0C0wVbmqKks",
+            authDomain: "rankingubatubadeciclismo.firebaseapp.com",
+            projectId: "rankingubatubadeciclismo",
+            storageBucket: "rankingubatubadeciclismo.firebasestorage.app",
+            messagingSenderId: "164808638910",
+            appId: "1:164808638910:web:0278c92e92872f038939ef"
+        };
+        
+        // Configuração do Firebase para categorias e modalidades
+        const firebaseConfigCategories = {
+            apiKey: "AIzaSyAU0QLF33-nwVIyBMfQXZ9GCSR-NfnL-PQ",
+            authDomain: "categorias-e-modalidades-ruc.firebaseapp.com",
+            databaseURL: "https://categorias-e-modalidades-ruc-default-rtdb.firebaseio.com",
+            projectId: "categorias-e-modalidades-ruc",
+            storageBucket: "categorias-e-modalidades-ruc.firebasestorage.app",
+            messagingSenderId: "380980931865",
+            appId: "1:380980931865:web:d6cdf06f5eec1b2bd5e988"
+        };
+        
+        // Inicializar Firebase para eventos
+        const firebaseEvents = firebase.initializeApp(firebaseConfigEvents, "events");
+        const databaseEvents = firebaseEvents.database();
+        const authEvents = firebaseEvents.auth();
+        
+        // Inicializar Firebase para categorias e modalidades
+        const firebaseCategories = firebase.initializeApp(firebaseConfigCategories, "categories");
+        const databaseCategories = firebaseCategories.database();
+        
+        // Variáveis globais
+        let isAdmin = false;
+        let currentEventId = null;
+        let currentRiderId = null;
+        let editingEventId = null;
+        let allCategories = [];
+        let allModalities = [];
+        
+        // Elementos do DOM
+        const activeEventsContainer = document.getElementById('active-events-container');
+        const finishedEventsContainer = document.getElementById('finished-events-container');
+        const loginBtn = document.getElementById('login-btn');
+        const adminPanel = document.getElementById('admin-panel');
+        const logoutBtn = document.getElementById('logout-btn');
+        const addEventBtn = document.getElementById('add-event-btn');
+        const registerModal = document.getElementById('register-modal');
+        const loginModal = document.getElementById('login-modal');
+        const eventModal = document.getElementById('event-modal');
+        const riderModal = document.getElementById('rider-modal');
+        const closeButtons = document.getElementsByClassName('close');
+        const confirmRegisterBtn = document.getElementById('confirm-register-btn');
+        const fullNameInput = document.getElementById('full-name');
+        const birthDateInput = document.getElementById('birth-date');
+        const phoneInput = document.getElementById('phone');
+        const voucherCodeInput = document.getElementById('voucher-code');
+        const categoryInput = document.getElementById('category');
+        const modalityInput = document.getElementById('modality');
+        const categorySection = document.getElementById('category-section');
+        const modalitySection = document.getElementById('modality-section');
+        const confirmLoginBtn = document.getElementById('confirm-login-btn');
+        const adminEmailInput = document.getElementById('admin-email');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const loginError = document.getElementById('login-error');
+        const eventNameInput = document.getElementById('event-name');
+        const eventDateInput = document.getElementById('event-date');
+        const eventPriceInput = document.getElementById('event-price');
+        const eventDescriptionInput = document.getElementById('event-description');
+        const eventImageUrlInput = document.getElementById('event-image-url');
+        const regulationLinkInput = document.getElementById('regulation-link');
+        const saveEventBtn = document.getElementById('save-event-btn');
+        const deleteEventBtn = document.getElementById('delete-event-btn');
+        const eventModalTitle = document.getElementById('event-modal-title');
+        const eventSelectedName = document.getElementById('event-selected-name');
+        const riderEventName = document.getElementById('rider-event-name');
+        const editNameInput = document.getElementById('edit-name');
+        const editVoucherCodeInput = document.getElementById('edit-voucher-code');
+        const editCategoryInput = document.getElementById('edit-category');
+        const editModalityInput = document.getElementById('edit-modality');
+        const editCategorySection = document.getElementById('edit-category-section');
+        const editModalitySection = document.getElementById('edit-modality-section');
+        const editStatusInput = document.getElementById('edit-status');
+        const saveRiderBtn = document.getElementById('save-rider-btn');
+        const deleteRiderBtn = document.getElementById('delete-rider-btn');
+        const registerSpinner = document.getElementById('register-spinner');
+        const eventSpinner = document.getElementById('event-spinner');
+        const riderSpinner = document.getElementById('rider-spinner');
+        const activeEventsSpinner = document.getElementById('active-events-spinner');
+        const finishedEventsSpinner = document.getElementById('finished-events-spinner');
+        const useCategoriesCheckbox = document.getElementById('use-categories');
+        const categoriesList = document.getElementById('categories-list');
+        const useModalitiesCheckbox = document.getElementById('use-modalities');
+        const modalitiesList = document.getElementById('modalities-list');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Inicializar a aplicação
+        function initApp() {
+            // Configurar máscaras
+            $('#phone').mask('(00) 00000-0000');
+            $('#birth-date').mask('00-00-0000');
+            
+            // Carregar categorias e modalidades
+            loadCategoriesAndModalities();
+            
+            // Verificar estado de autenticação
+            authEvents.onAuthStateChanged(user => {
+                if (user && user.email === "ruc@ruc.com") {
+                    isAdmin = true;
+                    adminPanel.style.display = 'block';
+                    loginBtn.textContent = 'Admin Logado';
+                    loginBtn.disabled = true;
+                } else {
+                    isAdmin = false;
+                    adminPanel.style.display = 'none';
+                    loginBtn.textContent = 'Login Admin';
+                    loginBtn.disabled = false;
+                }
+                loadEvents();
+            });
+            
+            // Event listeners para abas
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    activateTab(tabId);
+                });
+            });
+            
+            // Event listeners
+            loginBtn.addEventListener('click', openLoginModal);
+            confirmLoginBtn.addEventListener('click', loginAdmin);
+            logoutBtn.addEventListener('click', logoutAdmin);
+            addEventBtn.addEventListener('click', () => openEventModal());
+            saveEventBtn.addEventListener('click', saveEvent);
+            deleteEventBtn.addEventListener('click', () => deleteEvent());
+            confirmRegisterBtn.addEventListener('click', confirmRegistration);
+            saveRiderBtn.addEventListener('click', saveRider);
+            deleteRiderBtn.addEventListener('click', () => deleteRider());
+            
+            // Event listeners para checkboxes de opções
+            useCategoriesCheckbox.addEventListener('change', function() {
+                categoriesList.style.display = this.checked ? 'flex' : 'none';
+            });
+            
+            useModalitiesCheckbox.addEventListener('change', function() {
+                modalitiesList.style.display = this.checked ? 'flex' : 'none';
+            });
+            
+            // Fechar modais ao clicar no X
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            }
+            
+            // Fechar modais ao clicar fora
+            window.addEventListener('click', function(event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            });
+        }
+        
+        // Ativar aba específica
+        function activateTab(tabId) {
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            // Recarregar eventos se necessário
+            if (tabId === 'finished-events') {
+                loadFinishedEvents();
+            }
+        }
+        
+        // Carregar categorias e modalidades do Firebase específico
+        function loadCategoriesAndModalities() {
+            databaseCategories.ref('categories').on('value', snapshot => {
+                if (snapshot.exists()) {
+                    allCategories = snapshot.val();
+                    populateCategoriesList();
+                }
+            });
+            
+            databaseCategories.ref('modalities').on('value', snapshot => {
+                if (snapshot.exists()) {
+                    allModalities = snapshot.val();
+                    populateModalitiesList();
+                }
+            });
+        }
+        
+        // Popular lista de categorias no modal de evento
+        function populateCategoriesList() {
+            categoriesList.innerHTML = '';
+            allCategories.forEach(category => {
+                const optionItem = document.createElement('div');
+                optionItem.className = 'option-item';
+                optionItem.innerHTML = `
+                    <input type="checkbox" id="cat-${category.id}" value="${category.name}" checked>
+                    <label for="cat-${category.id}">${category.name}</label>
+                `;
+                categoriesList.appendChild(optionItem);
+            });
+        }
+        
+        // Popular lista de modalidades no modal de evento
+        function populateModalitiesList() {
+            modalitiesList.innerHTML = '';
+            allModalities.forEach(modality => {
+                const optionItem = document.createElement('div');
+                optionItem.className = 'option-item';
+                optionItem.innerHTML = `
+                    <input type="checkbox" id="mod-${modality.id}" value="${modality.name}" checked>
+                    <label for="mod-${modality.id}">${modality.name}</label>
+                `;
+                modalitiesList.appendChild(optionItem);
+            });
+        }
+        
+        // Carregar eventos do Firebase
+        function loadEvents() {
+            activeEventsSpinner.style.display = 'block';
+            activeEventsContainer.innerHTML = '';
+            
+            databaseEvents.ref('cyclingRaces').on('value', snapshot => {
+                activeEventsSpinner.style.display = 'none';
+                
+                if (!snapshot.exists()) {
+                    activeEventsContainer.innerHTML = '<p>Nenhum evento disponível no momento.</p>';
+                    return;
+                }
+                
+                const events = snapshot.val();
+                activeEventsContainer.innerHTML = '';
+                
+                for (const eventId in events) {
+                    const event = events[eventId];
+                    // Mostrar apenas eventos ativos na aba de eventos ativos
+                    if (event.status === 'open') {
+                        const eventElement = createEventElement(eventId, event);
+                        activeEventsContainer.appendChild(eventElement);
+                    }
+                }
+                
+                if (activeEventsContainer.children.length === 0) {
+                    activeEventsContainer.innerHTML = '<p>Não há eventos ativos no momento.</p>';
+                }
+            }, error => {
+                console.error("Erro ao carregar eventos:", error);
+                activeEventsSpinner.style.display = 'none';
+                activeEventsContainer.innerHTML = '<p>Ocorreu um erro ao carregar os eventos. Por favor, recarregue a página.</p>';
+            });
+        }
+        
+        // Carregar eventos finalizados
+        function loadFinishedEvents() {
+            finishedEventsSpinner.style.display = 'block';
+            finishedEventsContainer.innerHTML = '';
+            
+            databaseEvents.ref('cyclingRaces').on('value', snapshot => {
+                finishedEventsSpinner.style.display = 'none';
+                
+                if (!snapshot.exists()) {
+                    finishedEventsContainer.innerHTML = '<p>Nenhum evento finalizado disponível.</p>';
+                    return;
+                }
+                
+                const events = snapshot.val();
+                finishedEventsContainer.innerHTML = '';
+                
+                for (const eventId in events) {
+                    const event = events[eventId];
+                    // Mostrar apenas eventos finalizados na aba de eventos finalizados
+                    if (event.status === 'closed' || event.status === 'finished') {
+                        const eventElement = createEventElement(eventId, event);
+                        finishedEventsContainer.appendChild(eventElement);
+                    }
+                }
+                
+                if (finishedEventsContainer.children.length === 0) {
+                    finishedEventsContainer.innerHTML = '<p>Não há eventos finalizados.</p>';
+                }
+            }, error => {
+                console.error("Erro ao carregar eventos finalizados:", error);
+                finishedEventsSpinner.style.display = 'none';
+                finishedEventsContainer.innerHTML = '<p>Ocorreu um erro ao carregar os eventos finalizados. Por favor, recarregue a página.</p>';
+            });
+        }
+        
+        // Criar elemento HTML para um evento
+        function createEventElement(eventId, event) {
+            const eventElement = document.createElement('div');
+            eventElement.className = 'event-card';
+            eventElement.id = `event-${eventId}`;
+            
+            const statusClass = event.status === 'open' ? 'status-open' : 'status-closed';
+            const statusText = event.status === 'open' ? 'Inscrições Abertas' : 'Inscrições Encerradas';
+            
+            // Determinar a imagem a ser usada
+            const imageUrl = event.imageUrl || getDefaultImage(event.name);
+            
+            // Formatar data
+            const formattedDate = formatDate(event.date);
+            
+            // Formatar preço
+            const formattedPrice = formatPrice(event.price);
+            
+            eventElement.innerHTML = `
+                <img src="${imageUrl}" alt="${event.name}" class="event-image">
+                <div class="event-content">
+                    <h3 class="event-title">${event.name}</h3>
+                    <div class="event-info">
+                        <span class="event-date">${formattedDate}</span>
+                        <span class="event-price">${formattedPrice}</span>
+                    </div>
+                    <div class="event-status ${statusClass}">${statusText}</div>
+                    <p class="event-description">${event.description || 'Sem descrição disponível.'}</p>
+                    <div class="event-actions">
+                        <button class="btn btn-primary register-btn" data-event-id="${eventId}">Inscrever-se</button>
+                        ${event.regulationLink ? `<a href="${event.regulationLink}" target="_blank" class="btn btn-warning regulation-btn">Ver Regulamento</a>` : ''}
+                        ${isAdmin ? `
+                            <div class="admin-actions">
+                                <button class="btn btn-success btn-small edit-btn" data-event-id="${eventId}">Editar</button>
+                                <button class="btn btn-danger btn-small delete-btn" data-event-id="${eventId}">Excluir</button>
+                                ${event.status === 'open' ? `<button class="btn btn-warning btn-small finish-btn" data-event-id="${eventId}">Finalizar</button>` : ''}
+                                <button class="btn btn-primary btn-small startlist-btn" data-event-id="${eventId}">Lista de Inscritos</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar event listeners aos botões
+            const registerBtn = eventElement.querySelector('.register-btn');
+            registerBtn.addEventListener('click', () => openRegisterModal(eventId, event.name));
+            
+            if (isAdmin) {
+                const editBtn = eventElement.querySelector('.edit-btn');
+                editBtn.addEventListener('click', () => openEventModal(eventId));
+                
+                const deleteBtn = eventElement.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', () => deleteEvent(eventId));
+                
+                const finishBtn = eventElement.querySelector('.finish-btn');
+                if (finishBtn) {
+                    finishBtn.addEventListener('click', () => finishEvent(eventId));
+                }
+                
+                const startlistBtn = eventElement.querySelector('.startlist-btn');
+                startlistBtn.addEventListener('click', () => showStartList(eventId, event.name));
+            }
+            
+            return eventElement;
+        }
+        
+        // Obter imagem padrão baseada no nome do evento
+        function getDefaultImage(eventName) {
+            // Usar Unsplash para imagens relacionadas ao esporte
+            const searchTerm = eventName.toLowerCase().includes('ciclismo') ? 'cycling' : 
+                              eventName.toLowerCase().includes('corrida') ? 'running' : 
+                              eventName.toLowerCase().includes('natação') ? 'swimming' : 'sports';
+            
+            return `https://source.unsplash.com/600x400/?${searchTerm}`;
+        }
+        
+        // Formatar data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        // Formatar preço
+        function formatPrice(price) {
+            return `R$ ${parseFloat(price).toFixed(2)}`;
+        }
+        
+        // Abrir modal de inscrição
+        function openRegisterModal(eventId, eventName) {
+            currentEventId = eventId;
+            eventSelectedName.textContent = eventName;
+            
+            // Limpar campos
+            fullNameInput.value = '';
+            birthDateInput.value = '';
+            phoneInput.value = '';
+            voucherCodeInput.value = '';
+            
+            // Carregar categorias e modalidades do evento
+            databaseEvents.ref(`cyclingRaces/${eventId}`).once('value').then(snapshot => {
+                const event = snapshot.val();
+                
+                // Configurar seções de categoria e modalidade
+                if (event.useCategories && event.categories) {
+                    categorySection.style.display = 'block';
+                    categoryInput.innerHTML = '<option value="">Selecione sua categoria</option>';
+                    event.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryInput.appendChild(option);
+                    });
+                } else {
+                    categorySection.style.display = 'none';
+                }
+                
+                if (event.useModalities && event.modalities) {
+                    modalitySection.style.display = 'block';
+                    modalityInput.innerHTML = '<option value="">Selecione sua modalidade</option>';
+                    event.modalities.forEach(modality => {
+                        const option = document.createElement('option');
+                        option.value = modality;
+                        option.textContent = modality;
+                        modalityInput.appendChild(option);
+                    });
+                } else {
+                    modalitySection.style.display = 'none';
+                }
+            });
+            
+            registerModal.style.display = 'block';
+        }
+        
+        // Confirmar inscrição
+        function confirmRegistration() {
+            const fullName = fullNameInput.value.trim();
+            const birthDate = birthDateInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const voucherCode = voucherCodeInput.value.trim();
+            const category = categorySection.style.display !== 'none' ? categoryInput.value : '';
+            const modality = modalitySection.style.display !== 'none' ? modalityInput.value : '';
+            
+            // Validação básica
+            if (!fullName || !birthDate || !phone) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            if (categorySection.style.display !== 'none' && !category) {
+                alert('Por favor, selecione uma categoria.');
+                return;
+            }
+            
+            if (modalitySection.style.display !== 'none' && !modality) {
+                alert('Por favor, selecione uma modalidade.');
+                return;
+            }
+            
+            registerSpinner.style.display = 'block';
+            confirmRegisterBtn.disabled = true;
+            
+            // Salvar inscrição no Firebase
+            const riderRef = databaseEvents.ref(`cyclingRaces/${currentEventId}/riders`).push();
+            riderRef.set({
+                name: fullName,
+                birthDate: birthDate,
+                phone: phone,
+                voucherCode: voucherCode,
+                category: category,
+                modality: modality,
+                status: 'pending',
+                registrationDate: new Date().toISOString()
+            }).then(() => {
+                registerSpinner.style.display = 'none';
+                confirmRegisterBtn.disabled = false;
+                alert('Inscrição realizada com sucesso!');
+                registerModal.style.display = 'none';
+            }).catch(error => {
+                registerSpinner.style.display = 'none';
+                confirmRegisterBtn.disabled = false;
+                console.error('Erro ao salvar inscrição:', error);
+                alert('Ocorreu um erro ao processar sua inscrição. Por favor, tente novamente.');
+            });
+        }
+        
+        // Abrir modal de login
+        function openLoginModal() {
+            adminEmailInput.value = '';
+            adminPasswordInput.value = '';
+            loginError.style.display = 'none';
+            loginModal.style.display = 'block';
+        }
+        
+        // Login do administrador
+        function loginAdmin() {
+            const email = adminEmailInput.value.trim();
+            const password = adminPasswordInput.value.trim();
+            
+            if (!email || !password) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            authEvents.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    loginModal.style.display = 'none';
+                    alert('Login realizado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro no login:', error);
+                    loginError.style.display = 'block';
+                });
+        }
+        
+        // Logout do administrador
+        function logoutAdmin() {
+            authEvents.signOut()
+                .then(() => {
+                    alert('Logout realizado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro no logout:', error);
+                });
+        }
+        
+        // Abrir modal de evento (para adicionar ou editar)
+        function openEventModal(eventId = null) {
+            editingEventId = eventId;
+            
+            // Limpar campos
+            eventNameInput.value = '';
+            eventDateInput.value = '';
+            eventPriceInput.value = '';
+            eventDescriptionInput.value = '';
+            eventImageUrlInput.value = '';
+            regulationLinkInput.value = '';
+            useCategoriesCheckbox.checked = false;
+            useModalitiesCheckbox.checked = false;
+            categoriesList.style.display = 'none';
+            modalitiesList.style.display = 'none';
+            
+            // Marcar todas as categorias e modalidades como selecionadas
+            document.querySelectorAll('#categories-list input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            document.querySelectorAll('#modalities-list input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            if (eventId) {
+                // Modo edição
+                eventModalTitle.textContent = 'Editar Evento';
+                deleteEventBtn.style.display = 'inline-block';
+                
+                // Carregar dados do evento
+                databaseEvents.ref(`cyclingRaces/${eventId}`).once('value').then(snapshot => {
+                    const event = snapshot.val();
+                    
+                    eventNameInput.value = event.name || '';
+                    eventDateInput.value = event.date || '';
+                    eventPriceInput.value = event.price || '';
+                    eventDescriptionInput.value = event.description || '';
+                    eventImageUrlInput.value = event.imageUrl || '';
+                    regulationLinkInput.value = event.regulationLink || '';
+                    
+                    // Configurar categorias e modalidades
+                    if (event.useCategories && event.categories) {
+                        useCategoriesCheckbox.checked = true;
+                        categoriesList.style.display = 'flex';
+                        
+                        // Desmarcar categorias não utilizadas
+                        document.querySelectorAll('#categories-list input[type="checkbox"]').forEach(checkbox => {
+                            checkbox.checked = event.categories.includes(checkbox.value);
+                        });
+                    }
+                    
+                    if (event.useModalities && event.modalities) {
+                        useModalitiesCheckbox.checked = true;
+                        modalitiesList.style.display = 'flex';
+                        
+                        // Desmarcar modalidades não utilizadas
+                        document.querySelectorAll('#modalities-list input[type="checkbox"]').forEach(checkbox => {
+                            checkbox.checked = event.modalities.includes(checkbox.value);
+                        });
+                    }
+                });
+            } else {
+                // Modo adição
+                eventModalTitle.textContent = 'Adicionar Novo Evento';
+                deleteEventBtn.style.display = 'none';
+            }
+            
+            eventModal.style.display = 'block';
+        }
+        
+        // Salvar evento (adicionar ou editar)
+        function saveEvent() {
+            const name = eventNameInput.value.trim();
+            const date = eventDateInput.value;
+            const price = eventPriceInput.value;
+            const description = eventDescriptionInput.value.trim();
+            const imageUrl = eventImageUrlInput.value.trim();
+            const regulationLink = regulationLinkInput.value.trim();
+            const useCategories = useCategoriesCheckbox.checked;
+            const useModalities = useModalitiesCheckbox.checked;
+            
+            // Obter categorias selecionadas
+            const selectedCategories = [];
+            if (useCategories) {
+                document.querySelectorAll('#categories-list input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedCategories.push(checkbox.value);
+                });
+            }
+            
+            // Obter modalidades selecionadas
+            const selectedModalities = [];
+            if (useModalities) {
+                document.querySelectorAll('#modalities-list input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedModalities.push(checkbox.value);
+                });
+            }
+            
+            // Validação
+            if (!name || !date || !price) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            eventSpinner.style.display = 'block';
+            saveEventBtn.disabled = true;
+            
+            const eventData = {
+                name: name,
+                date: date,
+                price: parseFloat(price),
+                description: description,
+                imageUrl: imageUrl || null,
+                regulationLink: regulationLink,
+                useCategories: useCategories,
+                useModalities: useModalities,
+                categories: selectedCategories,
+                modalities: selectedModalities,
+                status: 'open',
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingEventId) {
+                // Atualizar evento existente
+                databaseEvents.ref(`cyclingRaces/${editingEventId}`).update(eventData)
+                    .then(() => {
+                        eventSpinner.style.display = 'none';
+                        saveEventBtn.disabled = false;
+                        alert('Evento atualizado com sucesso!');
+                        eventModal.style.display = 'none';
+                    })
+                    .catch(error => {
+                        eventSpinner.style.display = 'none';
+                        saveEventBtn.disabled = false;
+                        console.error('Erro ao atualizar evento:', error);
+                        alert('Ocorreu um erro ao atualizar o evento. Por favor, tente novamente.');
+                    });
+            } else {
+                // Adicionar novo evento
+                databaseEvents.ref('cyclingRaces').push(eventData)
+                    .then(() => {
+                        eventSpinner.style.display = 'none';
+                        saveEventBtn.disabled = false;
+                        alert('Evento adicionado com sucesso!');
+                        eventModal.style.display = 'none';
+                    })
+                    .catch(error => {
+                        eventSpinner.style.display = 'none';
+                        saveEventBtn.disabled = false;
+                        console.error('Erro ao adicionar evento:', error);
+                        alert('Ocorreu um erro ao adicionar o evento. Por favor, tente novamente.');
+                    });
+            }
+        }
+        
+        // Excluir evento
+        function deleteEvent(eventId = null) {
+            const idToDelete = eventId || editingEventId;
+            
+            if (!idToDelete) return;
+            
+            if (confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.')) {
+                databaseEvents.ref(`cyclingRaces/${idToDelete}`).remove()
+                    .then(() => {
+                        alert('Evento excluído com sucesso!');
+                        if (eventModal.style.display === 'block') {
+                            eventModal.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao excluir evento:', error);
+                        alert('Ocorreu um erro ao excluir o evento. Por favor, tente novamente.');
+                    });
+            }
+        }
+        
+        // Finalizar evento
+        function finishEvent(eventId) {
+            if (confirm('Tem certeza que deseja finalizar este evento? As inscrições serão encerradas.')) {
+                databaseEvents.ref(`cyclingRaces/${eventId}`).update({
+                    status: 'closed'
+                })
+                .then(() => {
+                    alert('Evento finalizado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao finalizar evento:', error);
+                    alert('Ocorreu um erro ao finalizar o evento. Por favor, tente novamente.');
+                });
+            }
+        }
+        
+        // Mostrar lista de inscritos
+        function showStartList(eventId, eventName) {
+            // Criar modal para lista de inscritos
+            const startListModal = document.createElement('div');
+            startListModal.className = 'modal';
+            startListModal.id = 'startlist-modal';
+            
+            startListModal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <span class="close">&times;</span>
+                    <h2>Lista de Inscritos - ${eventName}</h2>
+                    <div class="start-list">
+                        <div class="form-group">
+                            <label for="status-filter">Filtrar por status:</label>
+                            <select id="status-filter" class="status-filter">
+                                <option value="all">Todos</option>
+                                <option value="pending">Contato Pendente</option>
+                                <option value="waiting">Aguardando Pagamento</option>
+                                <option value="completed">Pagamento Concluído</option>
+                            </select>
+                        </div>
+                        <div id="startlist-content">
+                            <div class="loading-spinner" id="startlist-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(startListModal);
+            
+            // Event listeners para fechar o modal
+            const closeBtn = startListModal.querySelector('.close');
+            closeBtn.addEventListener('click', () => {
+                document.body.removeChild(startListModal);
+            });
+            
+            startListModal.addEventListener('click', (e) => {
+                if (e.target === startListModal) {
+                    document.body.removeChild(startListModal);
+                }
+            });
+            
+            // Carregar lista de inscritos
+            const startlistContent = startListModal.querySelector('#startlist-content');
+            const startlistSpinner = startListModal.querySelector('#startlist-spinner');
+            const statusFilter = startListModal.querySelector('#status-filter');
+            
+            startlistSpinner.style.display = 'block';
+            
+            databaseEvents.ref(`cyclingRaces/${eventId}/riders`).on('value', snapshot => {
+                startlistSpinner.style.display = 'none';
+                
+                if (!snapshot.exists()) {
+                    startlistContent.innerHTML = '<p>Nenhum inscrito encontrado.</p>';
+                    return;
+                }
+                
+                const riders = snapshot.val();
+                const selectedStatus = statusFilter.value;
+                
+                let ridersHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Data Nasc.</th>
+                                <th>Telefone</th>
+                                <th>Categoria</th>
+                                <th>Modalidade</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                for (const riderId in riders) {
+                    const rider = riders[riderId];
+                    
+                    // Filtrar por status
+                    if (selectedStatus !== 'all' && rider.status !== selectedStatus) {
+                        continue;
+                    }
+                    
+                    const statusClass = `status-${rider.status}`;
+                    const statusText = {
+                        'pending': 'Contato Pendente',
+                        'waiting': 'Aguardando Pagamento',
+                        'completed': 'Pagamento Concluído'
+                    }[rider.status] || rider.status;
+                    
+                    ridersHtml += `
+                        <tr>
+                            <td>${rider.name}</td>
+                            <td>${rider.birthDate}</td>
+                            <td>${rider.phone}</td>
+                            <td>${rider.category || '-'}</td>
+                            <td>${rider.modality || '-'}</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <button class="action-btn edit-btn" data-rider-id="${riderId}">Editar</button>
+                                <button class="action-btn delete-btn" data-rider-id="${riderId}">Excluir</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                ridersHtml += `
+                        </tbody>
+                    </table>
+                `;
+                
+                startlistContent.innerHTML = ridersHtml;
+                
+                // Adicionar event listeners aos botões de ação
+                startlistContent.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openRiderModal(eventId, btn.dataset.riderId, eventName));
+                });
+                
+                startlistContent.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteRider(eventId, btn.dataset.riderId));
+                });
+            });
+            
+            // Event listener para filtro de status
+            statusFilter.addEventListener('change', () => {
+                // Recarregar a lista com o filtro aplicado
+                databaseEvents.ref(`cyclingRaces/${eventId}/riders`).once('value').then(snapshot => {
+                    if (!snapshot.exists()) {
+                        startlistContent.innerHTML = '<p>Nenhum inscrito encontrado.</p>';
+                        return;
+                    }
+                    
+                    const riders = snapshot.val();
+                    const selectedStatus = statusFilter.value;
+                    
+                    let ridersHtml = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Data Nasc.</th>
+                                    <th>Telefone</th>
+                                    <th>Categoria</th>
+                                    <th>Modalidade</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    for (const riderId in riders) {
+                        const rider = riders[riderId];
+                        
+                        // Filtrar por status
+                        if (selectedStatus !== 'all' && rider.status !== selectedStatus) {
+                            continue;
+                        }
+                        
+                        const statusClass = `status-${rider.status}`;
+                        const statusText = {
+                            'pending': 'Contato Pendente',
+                            'waiting': 'Aguardando Pagamento',
+                            'completed': 'Pagamento Concluído'
+                        }[rider.status] || rider.status;
+                        
+                        ridersHtml += `
+                            <tr>
+                                <td>${rider.name}</td>
+                                <td>${rider.birthDate}</td>
+                                <td>${rider.phone}</td>
+                                <td>${rider.category || '-'}</td>
+                                <td>${rider.modality || '-'}</td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td>
+                                    <button class="action-btn edit-btn" data-rider-id="${riderId}">Editar</button>
+                                    <button class="action-btn delete-btn" data-rider-id="${riderId}">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    ridersHtml += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    startlistContent.innerHTML = ridersHtml;
+                    
+                    // Adicionar event listeners aos botões de ação
+                    startlistContent.querySelectorAll('.edit-btn').forEach(btn => {
+                        btn.addEventListener('click', () => openRiderModal(eventId, btn.dataset.riderId, eventName));
+                    });
+                    
+                    startlistContent.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', () => deleteRider(eventId, btn.dataset.riderId));
+                    });
+                });
+            });
+            
+            startListModal.style.display = 'block';
+        }
+        
+        // Abrir modal de edição de inscrito
+        function openRiderModal(eventId, riderId, eventName) {
+            currentEventId = eventId;
+            currentRiderId = riderId;
+            riderEventName.textContent = eventName;
+            
+            // Limpar campos
+            editNameInput.value = '';
+            editVoucherCodeInput.value = '';
+            editStatusInput.value = 'pending';
+            
+            // Carregar dados do inscrito
+            databaseEvents.ref(`cyclingRaces/${eventId}/riders/${riderId}`).once('value').then(snapshot => {
+                const rider = snapshot.val();
+                
+                editNameInput.value = rider.name || '';
+                editVoucherCodeInput.value = rider.voucherCode || '';
+                editStatusInput.value = rider.status || 'pending';
+                
+                // Carregar categorias e modalidades do evento
+                databaseEvents.ref(`cyclingRaces/${eventId}`).once('value').then(eventSnapshot => {
+                    const event = eventSnapshot.val();
+                    
+                    // Configurar seções de categoria e modalidade
+                    if (event.useCategories && event.categories) {
+                        editCategorySection.style.display = 'block';
+                        editCategoryInput.innerHTML = '';
+                        event.categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category;
+                            option.textContent = category;
+                            if (category === rider.category) {
+                                option.selected = true;
+                            }
+                            editCategoryInput.appendChild(option);
+                        });
+                    } else {
+                        editCategorySection.style.display = 'none';
+                    }
+                    
+                    if (event.useModalities && event.modalities) {
+                        editModalitySection.style.display = 'block';
+                        editModalityInput.innerHTML = '';
+                        event.modalities.forEach(modality => {
+                            const option = document.createElement('option');
+                            option.value = modality;
+                            option.textContent = modality;
+                            if (modality === rider.modality) {
+                                option.selected = true;
+                            }
+                            editModalityInput.appendChild(option);
+                        });
+                    } else {
+                        editModalitySection.style.display = 'none';
+                    }
+                });
+            });
+            
+            riderModal.style.display = 'block';
+        }
+        
+        // Salvar alterações do inscrito
+        function saveRider() {
+            const name = editNameInput.value.trim();
+            const voucherCode = editVoucherCodeInput.value.trim();
+            const category = editCategorySection.style.display !== 'none' ? editCategoryInput.value : '';
+            const modality = editModalitySection.style.display !== 'none' ? editModalityInput.value : '';
+            const status = editStatusInput.value;
+            
+            // Validação
+            if (!name) {
+                alert('Por favor, preencha o nome do inscrito.');
+                return;
+            }
+            
+            riderSpinner.style.display = 'block';
+            saveRiderBtn.disabled = true;
+            
+            const riderData = {
+                name: name,
+                voucherCode: voucherCode,
+                category: category,
+                modality: modality,
+                status: status
+            };
+            
+            databaseEvents.ref(`cyclingRaces/${currentEventId}/riders/${currentRiderId}`).update(riderData)
+                .then(() => {
+                    riderSpinner.style.display = 'none';
+                    saveRiderBtn.disabled = false;
+                    alert('Inscrito atualizado com sucesso!');
+                    riderModal.style.display = 'none';
+                })
+                .catch(error => {
+                    riderSpinner.style.display = 'none';
+                    saveRiderBtn.disabled = false;
+                    console.error('Erro ao atualizar inscrito:', error);
+                    alert('Ocorreu um erro ao atualizar o inscrito. Por favor, tente novamente.');
+                });
+        }
+        
+        // Excluir inscrito
+        function deleteRider(eventId = null, riderId = null) {
+            const eventToDelete = eventId || currentEventId;
+            const riderToDelete = riderId || currentRiderId;
+            
+            if (!eventToDelete || !riderToDelete) return;
+            
+            if (confirm('Tem certeza que deseja excluir esta inscrição? Esta ação não pode ser desfeita.')) {
+                databaseEvents.ref(`cyclingRaces/${eventToDelete}/riders/${riderToDelete}`).remove()
+                    .then(() => {
+                        alert('Inscrição excluída com sucesso!');
+                        if (riderModal.style.display === 'block') {
+                            riderModal.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao excluir inscrição:', error);
+                        alert('Ocorreu um erro ao excluir a inscrição. Por favor, tente novamente.');
+                    });
+            }
+        }
+        
+        // Inicializar a aplicação quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
